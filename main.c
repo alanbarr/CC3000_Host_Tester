@@ -29,6 +29,8 @@
  *  - Try to make it work with all compilers... (ISRs should be OK, but the SR?)
  *  - Cleanup
  *  - Consider removing looping with sleeps? 
+ *  - Don't currently check that READ command (03) followed by BUSY bytes (00 00)
+ *    are correctly being received when Host is doing a read from us.
  */
 
 #include "msp430g2553.h"
