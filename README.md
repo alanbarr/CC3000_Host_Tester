@@ -49,37 +49,37 @@ The MSP430 Launchpad has the following pin set-up:
 ## Steps
 The following are the steps that `wlan_start(0)` is expected to follow:
 
-| Step          | Action Expected                                           |
-|---------------|-----------------------------------------------------------|
-|      0        | Host sets EN low, CS High, CLK Low. (For least 50 ms)     |
-|      1        | Host sets EN High                                         |
-|      2        | We set IRQ Low                                            |
-|      3        | Host Sets CS Low                                          |
-|      4        | Nothing happens for 50 us                                 |
-|      5        | We RX: First 4 bytes of HCI_CMND_SIMPLE_LINK_START        |
-|      6        | Nothing happens for 50 us                                 |
-|      7        | We RX: Last 6 bytes of HCI_CMND_SIMPLE_LINK_START Reply   |
-|      8        | Host sets CS high, We set IRQ high                        |
-|               |                                                           |
-|      9        | We drop IRQ                                               |
-|      10       | Host set CS low                                           |
-|      11       | We TX: COMMAND OK                                         |
-|      12       | Host pulls CS high                                        |
-|      13       | We raise IRQ                                              |
-|               |                                                           |
-|      14       | Host sets CS Low                                          |
-|      15       | We set IRQ Low                                            |
-|      16       | We RX: HCI_CMND_READ_BUFFER_SIZE                          |
-|      17       | Host sets CS High                                         |
-|      18       | We set IRQ High                                           |
-|               |                                                           |
-|      19       | We set IRQ Low                                            |
-|      20       | Host sets CS Low                                          |
-|      21       | We TX: HCI_CMND_READ_BUFFER_SIZE Reply                    |
-|               |                                                           |
-|      22       | Host Pulls CS High                                        |
-|      23       | We set IRQ High                                           |
-|      DONE!    |                                                           |
+| Step          | Action Expected                                             |
+|---------------|-------------------------------------------------------------|
+|      0        | Host sets EN low, CS High, CLK Low. (For least 50 ms)       |
+|      1        | Host sets EN High                                           |
+|      2        | We set IRQ Low                                              |
+|      3        | Host Sets CS Low                                            |
+|      4        | Nothing happens for 50 us                                   |
+|      5        | We RX: First 4 bytes of HCI_CMND_SIMPLE_LINK_START          |
+|      6        | Nothing happens for 50 us                                   |
+|      7        | We RX: Last 6 bytes of HCI_CMND_SIMPLE_LINK_START Reply     |
+|      8        | Host sets CS high, We set IRQ high                          |
+|               |                                                             |
+|      9        | We drop IRQ                                                 |
+|      10       | Host set CS low                                             |
+|      11       | We RX read byte (0x03), TX: COMMAND OK                      |
+|      12       | Host pulls CS high                                          |
+|      13       | We raise IRQ                                                |
+|               |                                                             |
+|      14       | Host sets CS Low                                            |
+|      15       | We set IRQ Low                                              |
+|      16       | We RX: HCI_CMND_READ_BUFFER_SIZE                            |
+|      17       | Host sets CS High                                           |
+|      18       | We set IRQ High                                             |
+|               |                                                             |
+|      19       | We set IRQ Low                                              |
+|      20       | Host sets CS Low                                            |
+|      21       | We RX read byte (0x03), TX: HCI_CMND_READ_BUFFER_SIZE Reply |
+|               |                                                             |
+|      22       | Host Pulls CS High                                          |
+|      23       | We set IRQ High                                             |
+|      DONE!    |                                                             |
 
 
 ## Testing

@@ -29,8 +29,6 @@
  *  - Try to make it work with all compilers... (ISRs should be OK, but the SR?)
  *  - Cleanup
  *  - Consider removing looping with sleeps? 
- *  - Don't currently check that READ command (03) followed by BUSY bytes (00 00)
- *    are correctly being received when Host is doing a read from us.
  */
 
 #include "msp430g2553.h"
@@ -142,6 +140,8 @@ do {                                        \
 /* Configure TA to error. 5000 = 5 seconds. If debugging, you can set this 
  * to zero. */
 #define SETUP_TA_DONT_GET_STUCK()   setupTimerA(false, 5000, TIME430_MS_CYCLES)
+
+#define STOP_TA_DONT_GET_STUCK()    TACTL |= TACLR
 
 /* enum of all potentential error values. */
 typedef enum
@@ -489,13 +489,11 @@ int main(void)
 
         else if (step == 5)
         {
-            /* Setup Timer A to prevent getting stuck */
             SETUP_TA_DONT_GET_STUCK();
 
             while (spiRxBufferIndex != 4 && step != STEP_ERROR);
 
-            /* Ensure Timer A has stopped */
-            TACTL |= TACLR;
+            STOP_TA_DONT_GET_STUCK();
 
             if (spiRxBuffer[0] == 0x01 &&
                 spiRxBuffer[1] == 0x00 &&
@@ -514,13 +512,11 @@ int main(void)
 
         else if (step == 7)
         {
-            /* Setup Timer A to prevent getting stuck */
             SETUP_TA_DONT_GET_STUCK();
 
             while (spiRxBufferIndex != 10 && step != STEP_ERROR);
 
-            /* Ensure Timer A has stopped */
-            TACTL |= TACLR;
+            STOP_TA_DONT_GET_STUCK();
 
             ERROR_CHECK_SPI_RX();
 
@@ -533,16 +529,15 @@ int main(void)
                 spiRxBuffer[8] == 0x01 &&
                 spiRxBuffer[9] == 0x00)
             {
-                /* Setup Timer A to prevent getting stuck */
-                SETUP_TA_DONT_GET_STUCK();
                 SET_STEP(8);
+
+                SETUP_TA_DONT_GET_STUCK();
 
                 /* manually checking CS here, as the interrupt could
                    have happened at either */
                 while ((P1IN & SPI_CS) == 0 && step != STEP_ERROR);
 
-                /* Ensure that timer A has stopped */
-                TACTL |= TACLR;
+                STOP_TA_DONT_GET_STUCK();
 
                 SET_STEP(9);
             }
@@ -585,8 +580,8 @@ int main(void)
 
     spiTxBufferIndex = 0;
     spiTxBufferElements = 10;
-
-    IE2 &= ~UCB0RXIE;
+    
+    spiRxBufferIndex = 0;
     IE2 |= UCB0TXIE;
     P2OUT &= ~CC3000_IRQ;
     P2OUT ^= DEBUG_PIN;
@@ -596,14 +591,19 @@ int main(void)
         if (step == 11)
         {
             SET_STEP(12);
-            /* Hang about here, waiting for TX to happen. */
 
-            /* Setup Timer A to prevent getting stuck */
             SETUP_TA_DONT_GET_STUCK();
+
+            /* Hang about here, waiting for TX to happen. */
             while(spiTxBufferElements && step != STEP_ERROR);
 
-            /* Ensure that timer A has stopped */
-            TACTL |= TACLR;
+            STOP_TA_DONT_GET_STUCK();
+
+            /* First byte received should be a read */
+            if (spiRxBuffer[0] != 0x03)
+            {
+                REPORT_ERROR(SPI_DATA);
+            }
         }
 
         else if (step == 13)
@@ -632,10 +632,7 @@ int main(void)
             spiRxBufferIndex = 0;
 
             SET_STEP(16);
-            IE2 |= UCB0RXIE;
-
-            /* TODO well get an interrupt firing.... quick fix */
-            while (spiRxBufferIndex != 1);
+            
             spiRxBufferIndex = 0;
 
             P2OUT &= ~CC3000_IRQ;
@@ -643,14 +640,12 @@ int main(void)
 
         else if (step == 16)
         {
-            /* Setup Timer A to prevent getting stuck */
             SETUP_TA_DONT_GET_STUCK();
 
             while (spiRxBufferIndex != 10 &&
                    step != STEP_ERROR);
 
-            /* Ensure that timer A has stopped */
-            TACTL |= TACLR;
+            STOP_TA_DONT_GET_STUCK();
 
             /* Did we get more than 10 bytes */
             TIME430_DELAY_MS(1);
@@ -675,9 +670,13 @@ int main(void)
                 spiRxBuffer[9] == 0x00 )
             {
                 SET_STEP(17);
-                /* TODO need a timer here ? */
-                while ((P1IN & SPI_CS) == 0);
+
+                SETUP_TA_DONT_GET_STUCK();
+
+                while (((P1IN & SPI_CS) == 0) && step != STEP_ERROR);
                 SET_STEP(18);
+
+                SETUP_TA_DONT_GET_STUCK();
             }
 
             else
@@ -728,7 +727,8 @@ int main(void)
             spiTxBufferIndex = 0;
             spiTxBufferElements = 10;
 
-            IE2 &= ~UCB0RXIE;
+            spiRxBufferIndex = 0;
+
             IE2 |= UCB0TXIE;
 
             P2OUT &= ~CC3000_IRQ;
@@ -737,7 +737,17 @@ int main(void)
         else if (step == 21)
         {
             SET_STEP(22);
-            while(spiTxBufferElements);
+
+            SETUP_TA_DONT_GET_STUCK();
+
+            while(spiTxBufferElements && step != STEP_ERROR);
+
+            SETUP_TA_DONT_GET_STUCK();
+
+            if (spiRxBuffer[0] != 0x03)
+            {
+                REPORT_ERROR(SPI_DATA);
+            }
         }
 
         else if (step == 23)
