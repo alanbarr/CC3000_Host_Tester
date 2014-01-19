@@ -26,7 +26,7 @@ describing the error and what step it occurred on.
 2. Connect the LP to your Host / Device Under Test (see Pins below).
 2. Reset the Launchpad - it should wait until it detects pins have been initialised.
 3. Start your host program.
-4. Monitor the UART serial connect for output.
+4. Monitor the UART serial connection for output.
 
 
 ## Pins
@@ -89,6 +89,8 @@ This code has so far only been tested against a second MSP430 Launchpad
 
 
 ## Notes
+The host's SPI clock shouldn't be operating at more than ~500 kHz otherwise 
+there will likely be some false positives.
 This has been compiled using MSPGCC. Hopefully it should be easy to use with 
 IAR or CSS. I think any likely error will be with functions setting bits in
 the status register, as I wasn't sure if there was a common function.
